@@ -200,6 +200,61 @@ export const getNotifications = async (req, res) => {
     }
 };
 
+export const markNotificationAsRead = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { notificationId } = req.params; 
+
+        if (!notificationId) {
+            return res.status(400).json({ message: 'Notification ID is required' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const updateResult = await User.updateOne(
+            { _id: userId, 'notifications._id': notificationId },
+            { $set: { 'notifications.$.read': true } }
+        );
+
+        if (updateResult.nModified === 0) {
+            return res.status(404).json({ message: 'Notification not found' });
+        }
+
+        res.status(200).json({ message: 'Notification marked as read successfully' });
+    } catch (error) {
+        console.error('Error marking notification as read:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+
+export const markAllNotificationsAsRead = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        await User.updateOne(
+            { _id: userId },
+            { $set: { 'notifications.$[elem].read': true } },
+            { arrayFilters: [{ 'elem.read': false }] } 
+        );
+
+        res.status(200).json({ message: 'All notifications marked as read successfully' });
+    } catch (error) {
+        console.error('Error marking all notifications as read:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+
+
 
 export const updateProfilePic = async (req, res) => {
     try {

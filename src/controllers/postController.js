@@ -110,6 +110,16 @@ export const addComment = async (req, res) => {
             return res.status(404).json({ message: 'Article not found' });
         }
 
+        const author = await User.findById(article.postedBy);
+        if (author) {
+            const notification = {
+                message: `${user.username || `${user.firstName} ${user.lastName}`} commented on your article: ${article.title}`,
+                createdAt: new Date()
+            };
+            author.notifications.push(notification);
+            await author.save();
+        }    
+
         res.status(201).json({ message: 'Comment added successfully', article });
     } catch (error) {
         console.error('Error adding comment:', error);
