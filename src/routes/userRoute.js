@@ -1,12 +1,16 @@
 import express from 'express'
 
-import { bookmarkArticle, addToLibrary, getBookmarks, getLibrary, followAndUnfollow, getFollowingArticles, getNotifications, updateProfilePic, markAllNotificationsAsRead, markNotificationAsRead } from '../controllers/userController.js'
+import {getUserById, myArticles, bookmarkArticle, addToLibrary, getBookmarks, getLibrary, followAndUnfollow, getFollowingArticles, getNotifications, updateProfilePic, markAllNotificationsAsRead, markNotificationAsRead, getUser } from '../controllers/userController.js'
 import auth from '../middlewares/auth.js'
 import upload from '../config/cloudinary.js'
 
 const router = express.Router()
 
-router.put('/profile-pic', auth, upload.single('profilePic'), updateProfilePic);
+router.get('/user/:_id', getUser)
+
+router.get('/profile', auth, getUserById)
+router.put('/update', auth, upload.single('profilePic'), updateProfilePic);
+router.get('/myArticles', auth, myArticles)
 router.post('/bookmark/:articleId', auth, bookmarkArticle);
 router.post('/library/:articleId', auth, addToLibrary);
 router.get('/bookmarks', auth, getBookmarks)

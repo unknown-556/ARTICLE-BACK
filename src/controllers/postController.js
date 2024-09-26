@@ -8,14 +8,16 @@ dotenv.config();
 
 export const addArticle = async (req, res) => {
     try {
-        const { image, title, description, content, category } = req.body;
+        const { image, title, description, content, categories } = req.body;
         const user = await User.findById(req.user._id);
+
+        console.log(req.body)
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        if (!title || !description || !content || !category) {
+        if (!title || !description || !content || !categories) {
             return res.status(400).json({ error: 'All fields are required' });
         }
 
@@ -40,7 +42,7 @@ export const addArticle = async (req, res) => {
             title,
             description,
             content,
-            category
+            categories
         });
 
         await article.save();
@@ -131,7 +133,7 @@ export const addComment = async (req, res) => {
 
 export const getAllPosts = async (req, res) => {
     try {
-        const allArticles = await Post.find().sort({ createdAt: -1 }); 
+        const allArticles = await User.find().sort({ createdAt: -1 }); 
         if (!allArticles || allArticles.length === 0) {
             return res.status(404).json({ message: 'No posts in database' });
         }
@@ -163,40 +165,90 @@ export const getPostsByCategory = async (req, res) => {
     }
 };
 
-export const getRelated = async (req, res) => {
+export const getPostsByUsername = async (req, res) => {
     try {
-        const { category } = req.params;
+        const user = await User.findById(req.params._id);
+        const author = `${user.firstName} ${user.lastName}`
+        console.log(author)
 
-        if (!category) {
-            return res.status(400).json({ error: 'Category is required' });
-        }
 
-        
-        const posts = await Post.aggregate([
-            { $match: { category } }, 
-            { $sample: { size: 5 } } 
-        ]);
+        const posts = await Post.find({ postedBy: author }).sort({ createdAt: -1 });
 
         if (posts.length === 0) {
-            return res.status(404).json({ message: 'No posts found for this category' });
+            return res.status(404).json({ message: 'No posts found for this user' });
         }
 
-        res.status(200).json({ message: `Random articles found for category: ${category}`, posts });
+        res.status(200).json({ message: 'Posts fetched successfully', posts });
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' });
-        console.error('Error fetching random posts by category:', error);
+        console.error('Error fetching posts:', error);
     }
 };
 
+export const getRelated = async (req, res) => {
+    try {
+        // Extract categories from the request parameters
+        const { categories } = req.params;
+
+        // Check if categories are provided and are not empty
+        if (!categories || !categories.trim()) {
+            return res.status(400).json({ error: 'Categories are required' });
+        }
+
+        // Convert categories from a comma-separated string to an array, trimming spaces
+        const categoryArray = categories.split(',').map(category => category.trim()).filter(Boolean);
+
+        // Log the categories array for debugging purposes
+        console.log('Categories Array:', categoryArray);
+
+        // Validate that we have valid categories in the array
+        if (categoryArray.length === 0) {
+            return res.status(400).json({ error: 'Valid categories are required' });
+        }
+
+        // Query the database for posts matching the specified categories
+        const posts = await Post.aggregate([
+            { $match: { categories: { $in: categories } } }, // Find posts with any matching category
+            { $sample: { size: 5 } } // Randomly select 5 posts
+        ]);
+
+        // Log the retrieved posts for debugging
+        console.log('Retrieved Posts:', posts);
+
+        // Check if any posts were found
+        if (posts.length === 0) {
+            return res.status(404).json({ message: 'No posts found for these categories' });
+        }
+
+        // Send a success response with the found posts
+        res.status(200).json({ 
+            message: `Random articles found for categories: ${categoryArray.join(', ')}`, 
+            posts 
+        });
+    } catch (error) {
+        // Handle errors and send a server error response
+        res.status(500).json({ error: 'Internal server error' });
+        console.error('Error fetching random posts by categories:', error);
+    }
+};
+
+
+
+
+
 export const getArticleById = async (req, res) => {
     try {
-        const { articleId } = req.params;
+        const { _id } = req.params;  
+
+        console.log(_id);
+
 
         const article = await Post.findByIdAndUpdate(
-            articleId,
-            { $inc: { viewCount: 1 } }, 
-            { new: true }
+            _id, 
+            { $inc: { viewCount: 1 } },  
+            { new: true }  
         );
+
 
         if (!article) {
             return res.status(404).json({ message: 'Article not found' });
@@ -204,9 +256,11 @@ export const getArticleById = async (req, res) => {
 
         res.status(200).json({ message: 'Article fetched successfully', article });
     } catch (error) {
+
         console.error('Error fetching article:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
 
 

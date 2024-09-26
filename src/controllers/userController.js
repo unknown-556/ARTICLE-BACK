@@ -1,12 +1,30 @@
 import User from "../models/userModel.js";
 import Post from "../models/postModel.js";
+import {v2 as cloudinary} from 'cloudinary'
 
 
 
 export const getUserById = async (req, res) => {
     try {
         const userId = req.user._id; 
-        const user = await User.findById(userId);
+        const user = await User.findById(userId).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ message: `No user with ID ${userId} found` });
+        }
+
+        res.status(200).json({ message: 'User found successfully', user });
+    } catch (error) {
+        console.error('Error while getting user:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+
+export const getUser = async (req, res) => {
+    try {
+        const userId = req.params._id; 
+        const user = await User.findById(userId).select('-password');
 
         if (!user) {
             return res.status(404).json({ message: `No user with ID ${userId} found` });
@@ -22,10 +40,12 @@ export const getUserById = async (req, res) => {
 
 export const myArticles = async (req, res) => {
     try {
-        const userId = req.user.userName;
+        const user = await User.findById(req.user._id);
+        const author = `${user.firstName} ${user.lastName}`
+        console.log(author)
 
 
-        const posts = await Post.find({ postedBy: userId }).sort({ createdAt: -1 });
+        const posts = await Post.find({ postedBy: author }).sort({ createdAt: -1 });
 
         if (posts.length === 0) {
             return res.status(404).json({ message: 'No posts found for this user' });
@@ -260,12 +280,16 @@ export const updateProfilePic = async (req, res) => {
     try {
       const userId = req.user._id;
       const user = await User.findById(userId);
+      console.log(user)
+      const {profilePic} = req.body
   
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
   
       const oldProfilePicId = user.profilePic && user.profilePic.split('/').pop().split('.')[0];
+      
+      let newProfilePicUrl = ""
       
       if (profilePic) {
         const uploadResponse = await cloudinary.uploader.upload(profilePic, {

@@ -25,16 +25,21 @@ export const signUp = async (req, res) => {
     }
   
     try {
-      const { userName, email } = req.body;
+      const { username, email, profilePic } = req.body;
       let { firstName, lastName, password } = req.body;
+
+      console.log(req.body)
   
       const existingUser = await User.findOne({ $or: [{ userName }, { email }] });
+      console.log(existingUser)
+
       if (existingUser) {
-        return res.status(400).json({ message: 'User already exists', user: existingUser });
+        return res.status(400).json({ message: 'User already exist', user: existingUser });
       }
+      
   
   
-      let profilePic = '';
+      let imageUrl = '';
   
       if (profilePic) {
         const uploadResponse = await cloudinary.uploader.upload(profilePic, {
@@ -48,7 +53,7 @@ export const signUp = async (req, res) => {
       const newUser = new User({
         firstName,
         lastName,
-        userName,
+        username,
         password: encryption,
         email,
         profilePic: imageUrl,
