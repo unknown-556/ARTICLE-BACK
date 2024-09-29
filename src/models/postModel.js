@@ -30,9 +30,7 @@ const articleSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
-  categories: [{ 
-    type: String
-  }],
+  categories: [String],
   comments: [
     {
       userId: {

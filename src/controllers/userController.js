@@ -21,6 +21,22 @@ export const getUserById = async (req, res) => {
 };
 
 
+export const getAuthor = async (req, res) => {
+    try {
+        const { username } = req.params; 
+        const user = await User.findOne({ username: username }).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ message: `No user with ID ${userId} found` });
+        }
+
+        res.status(200).json({ message: 'User found successfully', user });
+    } catch (error) {
+        console.error('Error while getting user:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
 export const getUser = async (req, res) => {
     try {
         const userId = req.params._id; 
@@ -41,11 +57,13 @@ export const getUser = async (req, res) => {
 export const myArticles = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
-        const author = `${user.firstName} ${user.lastName}`
+        const author = `${user.username}`
         console.log(author)
 
 
         const posts = await Post.find({ postedBy: author }).sort({ createdAt: -1 });
+
+        console.log(posts)
 
         if (posts.length === 0) {
             return res.status(404).json({ message: 'No posts found for this user' });
@@ -62,15 +80,20 @@ export const myArticles = async (req, res) => {
 export const bookmarkArticle = async (req, res) => {
     try {
       const { articleId } = req.params;
+      console.log(articleId)
       const userId = req.user._id;
   
       const user = await User.findById(userId);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
+
+      console.log(user)
   
       if (user.bookMarks.includes(articleId)) {
+        console.log({ message: 'Article already bookmarked' })
         return res.status(400).json({ message: 'Article already bookmarked' });
+        
       }
 
       user.bookMarks.push(articleId);
@@ -110,68 +133,102 @@ export const addToLibrary = async (req, res) => {
 
 export const getBookmarks = async (req, res) => {
     try {
-      const user = await User.findById(req.user._id).populate({
-        path: 'bookMarks', 
-        model: 'Post' 
-      });
-  
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-  
-      res.status(200).json({ message: 'Bookmarks fetched successfully', bookmarks: user.bookMarks });
+        const userId = req.user._id; // Get user ID from request (assumed to be added by authentication middleware)
+        const user = await User.findById(userId).populate('bookMarks');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        console.log({ bookmarks: user.bookMarks });
+
+        // Extracting bookmarked IDs from the populated bookMarks
+        const bookmarkedIds = user.bookMarks.map(bookmark => bookmark._id);
+
+        // Find articles that are bookmarked
+        const articles = await Post.find({ _id: { $in: bookmarkedIds } });
+
+        console.log(articles)
+
+        res.status(200).json({ bookmarks: user.bookMarks, articles });
     } catch (error) {
-      console.error('Error fetching bookmarks:', error);
-      res.status(500).json({ message: 'Internal server error' });
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
     }
 };
 
+
 export const getLibrary = async (req, res) => {
     try {
-      const user = await User.findById(req.user._id).populate({
-        path: 'library', 
-        model: 'Post' 
-      });
-  
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-  
-      res.status(200).json({ message: 'Library fetched successfully', library: user.library });
+        const userId = req.user._id; // Get user ID from request (assumed to be added by authentication middleware)
+        const user = await User.findById(userId).populate('library');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if the library is populated and has items
+        if (!user.library || user.library.length === 0) {
+            return res.status(404).json({ message: 'Library is empty' });
+        }
+
+        // Extracting library IDs
+        const libraryIds = user.library.map(item => item._id);
+
+        // Find articles based on library IDs
+        const articles = await Post.find({ _id: { $in: libraryIds } });
+
+        // Optionally project fields if necessary
+        // const articles = await Post.find({ _id: { $in: libraryIds } }).select('title content'); // Example projection
+
+        res.status(200).json({ library: user.library, articles });
     } catch (error) {
-      console.error('Error fetching library:', error);
-      res.status(500).json({ message: 'Internal server error' });
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
     }
 };
+
   
   
 export const followAndUnfollow = async (req, res) => {
     try {
-        const id = req.params.id
-        const userToModify = await User.findById(id)
-        const currentUser = await User.findById(req.user._id)
+        const id = req.params.id;
+        const userToModify = await User.findById(id);
+        const currentUser = await User.findById(req.user._id);
 
-        if (id === req.user._id.toString()) {
-            res.status(400).json({message: "You cannot follow/unfollow yourself"})
-        }
+        // Check if users exist
         if (!userToModify || !currentUser) {
-            res.status(404).json({message:'User not found'})
+            return res.status(404).json({ message: 'User not found' });
         }
-        const isFollowing = currentUser.followers.includes(id)
+
+        // Check if trying to follow/unfollow self
+        if (id === req.user._id.toString()) {
+            console.log({ message: "You cannot follow/unfollow yourself" });
+            return res.status(400).json({ message: "You cannot follow/unfollow yourself" });
+        }
+
+        const isFollowing = currentUser.following.includes(id);
+
         if (isFollowing) {
-            await User.findByIdAndUpdate(id,{$pull:{followers:req.user._id}})
-            await User.findByIdAndUpdate(req.user_id, {$pull: {following:id}})
-            res.status(200).json({message: "You have successfully unfollowed this user"})
+            // Unfollow
+            await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
+            await User.findByIdAndUpdate(req.user._id, { $pull: { following: id } });
+            return res.status(200).json({ message: "You have successfully unfollowed this user" });
         } else {
-            await User.findByIdAndUpdate(id,{$push:{followers:req.user._id}})
-            await User.findByIdAndUpdate(req.user_id,{$push:{following:id}})
-            res.status(200).json({message: "You have successfully followed this user"})
+            // Follow
+            await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } });
+            await User.findByIdAndUpdate(req.user._id, { $push: { following: id } });
+            return res.status(200).json({ message: "You have successfully followed this user" });
         }
     } catch (error) {
-        console.log();
-        res.status(500).json(error.message)
+        console.error(error); // Log the error
+        return res.status(500).json({ message: 'Server error', error: error.message });
     }
-}
+};
+
+
+
+
 
 
 export const getFollowingArticles = async (req, res) => {

@@ -1,6 +1,6 @@
 import express from 'express'
 
-import {getUserById, myArticles, bookmarkArticle, addToLibrary, getBookmarks, getLibrary, followAndUnfollow, getFollowingArticles, getNotifications, updateProfilePic, markAllNotificationsAsRead, markNotificationAsRead, getUser } from '../controllers/userController.js'
+import {getUserById, myArticles, bookmarkArticle, addToLibrary, getBookmarks, getLibrary, followAndUnfollow, getFollowingArticles, getNotifications, updateProfilePic, markAllNotificationsAsRead, markNotificationAsRead, getUser, getAuthor } from '../controllers/userController.js'
 import auth from '../middlewares/auth.js'
 import upload from '../config/cloudinary.js'
 
@@ -9,6 +9,7 @@ const router = express.Router()
 router.get('/user/:_id', getUser)
 
 router.get('/profile', auth, getUserById)
+router.get('/author/:username', getAuthor)
 router.put('/update', auth, upload.single('profilePic'), updateProfilePic);
 router.get('/myArticles', auth, myArticles)
 router.post('/bookmark/:articleId', auth, bookmarkArticle);

@@ -30,7 +30,7 @@ export const signUp = async (req, res) => {
 
       console.log(req.body)
   
-      const existingUser = await User.findOne({ $or: [{ userName }, { email }] });
+      const existingUser = await User.findOne({ $or: [{ username }, { email }] });
       console.log(existingUser)
 
       if (existingUser) {

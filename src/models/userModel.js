@@ -49,13 +49,13 @@ const userSchema = new mongoose.Schema({
     bookMarks: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Post',  
+              
         }
     ],
     library: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Post',
+            
         }
     ],
     following: {

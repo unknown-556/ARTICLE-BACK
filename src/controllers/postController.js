@@ -168,7 +168,7 @@ export const getPostsByCategory = async (req, res) => {
 export const getPostsByUsername = async (req, res) => {
     try {
         const user = await User.findById(req.params._id);
-        const author = `${user.firstName} ${user.lastName}`
+        const author = `${user.username}`
         console.log(author)
 
 
@@ -187,48 +187,26 @@ export const getPostsByUsername = async (req, res) => {
 
 export const getRelated = async (req, res) => {
     try {
-        // Extract categories from the request parameters
-        const { categories } = req.params;
+        // Get the categories from the request parameters and split them into an array
+        const categories = req.params.categories.split(',');
 
-        // Check if categories are provided and are not empty
-        if (!categories || !categories.trim()) {
-            return res.status(400).json({ error: 'Categories are required' });
+        console.log(categories);
+        
+        // Find related articles based on the categories
+        const relatedArticles = await Post.find({
+            categories: { $in: categories }, // Match posts with at least one of the categories
+        })
+        .limit(5) // Limit the number of related articles to 5
+        .sort({ createdAt: -1 }); // Sort by creation date (optional)
+
+        if (relatedArticles.length === 0) {
+            return res.status(404).json({ message: 'No related articles found.' });
         }
 
-        // Convert categories from a comma-separated string to an array, trimming spaces
-        const categoryArray = categories.split(',').map(category => category.trim()).filter(Boolean);
-
-        // Log the categories array for debugging purposes
-        console.log('Categories Array:', categoryArray);
-
-        // Validate that we have valid categories in the array
-        if (categoryArray.length === 0) {
-            return res.status(400).json({ error: 'Valid categories are required' });
-        }
-
-        // Query the database for posts matching the specified categories
-        const posts = await Post.aggregate([
-            { $match: { categories: { $in: categories } } }, // Find posts with any matching category
-            { $sample: { size: 5 } } // Randomly select 5 posts
-        ]);
-
-        // Log the retrieved posts for debugging
-        console.log('Retrieved Posts:', posts);
-
-        // Check if any posts were found
-        if (posts.length === 0) {
-            return res.status(404).json({ message: 'No posts found for these categories' });
-        }
-
-        // Send a success response with the found posts
-        res.status(200).json({ 
-            message: `Random articles found for categories: ${categoryArray.join(', ')}`, 
-            posts 
-        });
+        res.status(200).json({ posts: relatedArticles });
     } catch (error) {
-        // Handle errors and send a server error response
+        console.error('Error fetching related articles:', error);
         res.status(500).json({ error: 'Internal server error' });
-        console.error('Error fetching random posts by categories:', error);
     }
 };
 
