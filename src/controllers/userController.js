@@ -65,9 +65,9 @@ export const myArticles = async (req, res) => {
 
         console.log(posts)
 
-        if (posts.length === 0) {
-            return res.status(404).json({ message: 'No posts found for this user' });
-        }
+        // if (posts.length === 0) {
+        //     return res.status(404).json({ message: 'No posts found for this user' });
+        // }
 
         res.status(200).json({ message: 'Posts fetched successfully', posts });
     } catch (error) {
@@ -133,7 +133,7 @@ export const addToLibrary = async (req, res) => {
 
 export const getBookmarks = async (req, res) => {
     try {
-        const userId = req.user._id; // Get user ID from request (assumed to be added by authentication middleware)
+        const userId = req.user._id; 
         const user = await User.findById(userId).populate('bookMarks');
 
         if (!user) {
@@ -160,17 +160,17 @@ export const getBookmarks = async (req, res) => {
 
 export const getLibrary = async (req, res) => {
     try {
-        const userId = req.user._id; // Get user ID from request (assumed to be added by authentication middleware)
+        const userId = req.user._id; 
         const user = await User.findById(userId).populate('library');
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Check if the library is populated and has items
-        if (!user.library || user.library.length === 0) {
-            return res.status(404).json({ message: 'Library is empty' });
-        }
+
+        // if (!user.library || user.library.length === 0) {
+        //     return res.status(404).json({ message: 'Library is empty' });
+        // }
 
         // Extracting library IDs
         const libraryIds = user.library.map(item => item._id);
@@ -178,7 +178,7 @@ export const getLibrary = async (req, res) => {
         // Find articles based on library IDs
         const articles = await Post.find({ _id: { $in: libraryIds } });
 
-        // Optionally project fields if necessary
+
         // const articles = await Post.find({ _id: { $in: libraryIds } }).select('title content'); // Example projection
 
         res.status(200).json({ library: user.library, articles });
@@ -196,12 +196,10 @@ export const followAndUnfollow = async (req, res) => {
         const userToModify = await User.findById(id);
         const currentUser = await User.findById(req.user._id);
 
-        // Check if users exist
         if (!userToModify || !currentUser) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Check if trying to follow/unfollow self
         if (id === req.user._id.toString()) {
             console.log({ message: "You cannot follow/unfollow yourself" });
             return res.status(400).json({ message: "You cannot follow/unfollow yourself" });
@@ -210,18 +208,16 @@ export const followAndUnfollow = async (req, res) => {
         const isFollowing = currentUser.following.includes(id);
 
         if (isFollowing) {
-            // Unfollow
             await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
             await User.findByIdAndUpdate(req.user._id, { $pull: { following: id } });
             return res.status(200).json({ message: "You have successfully unfollowed this user" });
         } else {
-            // Follow
             await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } });
             await User.findByIdAndUpdate(req.user._id, { $push: { following: id } });
             return res.status(200).json({ message: "You have successfully followed this user" });
         }
     } catch (error) {
-        console.error(error); // Log the error
+        console.error(error);
         return res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
