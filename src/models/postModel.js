@@ -39,7 +39,7 @@ const articleSchema = new mongoose.Schema({
         required: true,
       },
       postedBy: {
-        type: String, // Keep as string if you store username or similar
+        type: String,
       },
       text: {
         type: String,

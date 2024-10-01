@@ -7,7 +7,7 @@ import upload from '../config/cloudinary.js'
 const   router = express.Router()
 
 router.post('/create', auth, upload.single('image'), addArticle)
-router.post('/comment', auth, upload.single('image'), addComment)
+router.post('/comment/:articleId', auth, upload.single('image'), addComment)
 router.get('/all', getAllPosts)
 router.get('/single/:_id', getArticleById)
 router.get('/catrgory/:category', getPostsByCategory)

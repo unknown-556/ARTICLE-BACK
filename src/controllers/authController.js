@@ -34,7 +34,7 @@ export const signUp = async (req, res) => {
       console.log(existingUser)
 
       if (existingUser) {
-        return res.status(400).json({ message: 'User already exist', user: existingUser });
+        return res.status(400).json({ message: 'User already exist. Change username or email', user: existingUser });
       }
       
   
@@ -118,3 +118,22 @@ export const signIn = async (req, res, next) => {
     }
 };
 
+
+
+export const getAllUsernames = async (req, res) => {
+  try {
+
+      const usernames = await User.find({}, 'username').select('-password');;
+
+     if (usernames.length === 0) {
+          return res.status(404).json({ message: 'No users found' });
+      }
+
+
+      res.status(200).json({ usernames });
+  } catch (error) {
+
+      res.status(500).json({ error: 'Internal server error' });
+      console.error('Error fetching usernames:', error);
+  }
+};

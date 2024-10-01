@@ -82,6 +82,8 @@ export const addComment = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        console.log(user)
+
         const { text, image } = req.body; 
         let imageUrl = "";
 
@@ -96,6 +98,7 @@ export const addComment = async (req, res) => {
         const comment = {
             image: imageUrl,
             text, 
+            userId: user._id ,
             postedBy: user.username || `${user.firstName} ${user.lastName}`,
             createdAt: new Date()
         };
@@ -112,16 +115,17 @@ export const addComment = async (req, res) => {
             return res.status(404).json({ message: 'Article not found' });
         }
 
-        const author = await User.findById(article.postedBy);
+        const author = await User.findById(article._id);
         if (author) {
             const notification = {
-                message: `${user.username || `${user.firstName} ${user.lastName}`} commented on your article: ${article.title}`,
+                message: `${user.username } commented on your article: ${article.title}`,
                 createdAt: new Date()
             };
             author.notifications.push(notification);
             await author.save();
         }    
 
+        console.log({ message: 'Comment added successfully', article });
         res.status(201).json({ message: 'Comment added successfully', article });
     } catch (error) {
         console.error('Error adding comment:', error);
@@ -174,9 +178,9 @@ export const getPostsByUsername = async (req, res) => {
 
         const posts = await Post.find({ postedBy: author }).sort({ createdAt: -1 });
 
-        if (posts.length === 0) {
-            return res.status(404).json({ message: 'No posts found for this user' });
-        }
+        // if (posts.length === 0) {
+        //     return res.status(404).json({ message: 'No posts found for this user' });
+        // }
 
         res.status(200).json({ message: 'Posts fetched successfully', posts });
     } catch (error) {
