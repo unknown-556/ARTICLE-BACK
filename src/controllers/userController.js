@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import User from "../models/userModel.js";
 import Post from "../models/postModel.js";
 import {v2 as cloudinary} from 'cloudinary'
@@ -264,8 +265,9 @@ export const getNotifications = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        const notifications = user.notifications || [];
+        const notifications = user.notifications.sort((a, b) => b.createdAt - a.createdAt) || [];
 
+        console.log({ message: 'Notifications fetched successfully', notifications });
         res.status(200).json({ message: 'Notifications fetched successfully', notifications });
     } catch (error) {
         console.error('Error fetching notifications:', error);
@@ -273,10 +275,32 @@ export const getNotifications = async (req, res) => {
     }
 };
 
+export const getUnreadNotificationCount = async (req, res) => {
+    const userId = req.user._id; // Corrected variable name to userId
+
+    try {
+        const user = await User.aggregate([
+            { $match: { _id: (userId) } },
+            { $unwind: "$notifications" },
+            { $match: { "notifications.read": false } },
+            { $count: "unreadCount" }
+        ]);
+
+        const unreadCount = user.length > 0 ? user[0].unreadCount : 0;
+        console.log({ unreadCount });
+        return res.status(200).json({ unreadCount });
+    } catch (error) {
+        console.error("Error fetching unread notification count:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
 export const markNotificationAsRead = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { notificationId } = req.params; 
+        const { notificationId } = req.params;
+
+        console.log(notificationId)
 
         if (!notificationId) {
             return res.status(400).json({ message: 'Notification ID is required' });
@@ -325,6 +349,31 @@ export const markAllNotificationsAsRead = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+
+export const deleteNotification = async (req, res) => {
+    try {
+        const userId = req.user._id; 
+        const notificationId = req.params.id; 
+
+        const updateResult = await User.updateOne(
+            { _id: userId },
+            { $pull: { notifications: { _id: notificationId } } }
+        );
+
+        if (updateResult.modifiedCount === 0) {
+            return res.status(404).json({ message: 'Notification not found' });
+        }
+
+        console.log({ message: 'Notification deleted successfully', updateResult });
+
+        res.status(200).json({ message: 'Notification deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}; 
+
+
 
 
 

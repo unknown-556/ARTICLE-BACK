@@ -46,6 +46,9 @@ const userSchema = new mongoose.Schema({
     profilePic: {
         type: String,
     },
+    bio: {
+        type: String,
+    },
     bookMarks: [
         {
             type: mongoose.Schema.Types.ObjectId,

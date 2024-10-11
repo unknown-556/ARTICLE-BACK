@@ -47,12 +47,34 @@ const articleSchema = new mongoose.Schema({
       },
       image: {
         type: String,
-        default: '', // Default empty string for optional images
+        default: '', 
       },
       createdAt: {
         type: Date,
         default: Date.now,
       },
+      reply: [
+        {
+          userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+          },
+          postedBy: {
+            type: String,
+          },
+          text: {
+            type: String,
+          },
+          image: {
+            type: String,
+          },
+          createdAt: {
+            type: Date,
+            default: Date.now,
+          },
+        }
+      ]
     },
   ],
   viewCount: {

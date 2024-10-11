@@ -82,11 +82,10 @@ export const addComment = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        console.log(user)
-
-        const { text, image } = req.body; 
+        const { text, image } = req.body;
         let imageUrl = "";
 
+        // Upload image if present
         if (image) {
             const uploadResponse = await cloudinary.uploader.upload(image, {
                 resource_type: 'auto',
@@ -95,35 +94,38 @@ export const addComment = async (req, res) => {
             console.log('Image uploaded successfully:', imageUrl);
         }
 
+        // Create the comment object
         const comment = {
             image: imageUrl,
-            text, 
-            userId: user._id ,
+            text,
+            userId: user._id,
             postedBy: user.username || `${user.firstName} ${user.lastName}`,
             createdAt: new Date()
         };
 
+        // Find the article by its ID and add the comment
         const { articleId } = req.params;
-
         const article = await Post.findByIdAndUpdate(
             articleId,
-            { $push: { comments: comment } },  
-            { new: true } 
+            { $push: { comments: comment } },
+            { new: true }
         );
 
         if (!article) {
             return res.status(404).json({ message: 'Article not found' });
         }
 
-        const author = await User.findById(article._id);
+        // Find the article's author using the postedBy field
+        const author = await User.findOne({ username: article.postedBy });
         if (author) {
             const notification = {
-                message: `${user.username } commented on your article: ${article.title}`,
-                createdAt: new Date()
+                message: `${user.username} commented on your article: ${article.title}`,
+                createdAt: new Date(),
+                read: false
             };
             author.notifications.push(notification);
             await author.save();
-        }    
+        }
 
         console.log({ message: 'Comment added successfully', article });
         res.status(201).json({ message: 'Comment added successfully', article });
@@ -132,6 +134,74 @@ export const addComment = async (req, res) => {
         res.status(500).send({ error: 'Internal server error' });
     }
 };
+
+
+export const replyToComment = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const { text, image } = req.body; 
+
+        console.log(req.body)
+        let imageUrl = "";
+
+        // Upload image if provided
+        if (image) {
+            const uploadResponse = await cloudinary.uploader.upload(image, {
+                resource_type: 'auto',
+            });
+            imageUrl = uploadResponse.secure_url;
+            console.log('Image uploaded successfully:', imageUrl);
+        }
+
+        // Create reply object
+        const reply = {
+            text,
+            image: imageUrl,
+            postedBy: user.username || `${user.firstName} ${user.lastName}`,
+            createdAt: new Date()
+        };
+
+        const { articleId, commentId } = req.params;
+
+        // Find the article and the specific comment to reply to
+        const article = await Post.findOneAndUpdate(
+            { _id: articleId, 'comments._id': commentId },
+            { $push: { 'comments.$.reply': reply } },  // Pushing reply into the specific comment's replies array
+            { new: true }
+        );
+
+        if (!article) {
+            return res.status(404).json({ message: 'Article or comment not found' });
+        }
+
+        // Optionally notify the original commenter
+        const originalComment = article.comments.find(comment => comment._id.toString() === commentId);
+        if (originalComment) {
+            const commentAuthor = await User.findById(originalComment.userId);
+            if (commentAuthor) {
+                const notification = {
+                    message: `${user.username} replied to your comment on the article: ${article.title}`,
+                    createdAt: new Date(),
+                    read: false
+                };
+                commentAuthor.notifications.push(notification);
+                await commentAuthor.save();
+            }
+        }
+
+
+        console.log({ message: 'Reply added successfully', article });
+        res.status(201).json({ message: 'Reply added successfully', article });
+    } catch (error) {
+        console.error('Error replying to comment:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
 
 
 

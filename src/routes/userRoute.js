@@ -1,6 +1,6 @@
 import express from 'express'
 
-import {getUserById, myArticles, bookmarkArticle, addToLibrary, getBookmarks, getLibrary, followAndUnfollow, getFollowingArticles, getNotifications, updateProfilePic, markAllNotificationsAsRead, markNotificationAsRead, getUser, getAuthor } from '../controllers/userController.js'
+import {getUserById, myArticles, bookmarkArticle, addToLibrary, getBookmarks, getLibrary, followAndUnfollow, getFollowingArticles, getNotifications, updateProfilePic, getUnreadNotificationCount, markAllNotificationsAsRead, markNotificationAsRead, deleteNotification, getUser, getAuthor } from '../controllers/userController.js'
 import auth from '../middlewares/auth.js'
 import upload from '../config/cloudinary.js'
 
@@ -19,7 +19,9 @@ router.get('/myLibrary', auth, getLibrary)
 router.post("/follow/:id", auth, followAndUnfollow);
 router.get("/following", auth, getFollowingArticles);
 router.get('/notifications', auth, getNotifications);
-router.post('/notifications/mark-all-as-read', markAllNotificationsAsRead);
-router.post('/notifications/:notificationId/mark-as-read', markNotificationAsRead);
+router.get('/unread/notifications', auth, getUnreadNotificationCount)
+router.post('/notifications/mark-all-as-read',auth, markAllNotificationsAsRead);
+router.delete('/notifications/:notificationId', auth, deleteNotification)
+router.post('/notifications/:notificationId/mark-as-read', auth, markNotificationAsRead);
 
 export default router
