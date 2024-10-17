@@ -159,6 +159,7 @@ export const replyToComment = async (req, res) => {
 
         // Create reply object
         const reply = {
+            userId: user._id,
             text,
             image: imageUrl,
             postedBy: user.username || `${user.firstName} ${user.lastName}`,
@@ -207,7 +208,7 @@ export const replyToComment = async (req, res) => {
 
 export const getAllPosts = async (req, res) => {
     try {
-        const allArticles = await User.find().sort({ createdAt: -1 }); 
+        const allArticles = await Post.find().sort({ createdAt: -1 }); 
         if (!allArticles || allArticles.length === 0) {
             return res.status(404).json({ message: 'No posts in database' });
         }

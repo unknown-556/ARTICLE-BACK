@@ -86,27 +86,41 @@ const articleSchema = new mongoose.Schema({
 const communitySchema = new mongoose.Schema ({
     name: {
         type: String,
+        unique: true,
     },
     description: {
         type: String,
+        default: '',
     },
     picture: {
         type: String,
-    },  
+        default: '',
+    }, 
+    tags: [String], 
     members: [
         {
             type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
 
         }
     ],
     Moderators: [
         {
             type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
         }
     ],
     posts: [articleSchema],
+    createdAt: {
+        type: Date,
+        default: Date.now,
+    },
+    latestActivity: {
+        type: Date,
+        default: Date.now,
+    },
 
-})
+});
 
 
 const Community = mongoose.model("Community", communitySchema);
