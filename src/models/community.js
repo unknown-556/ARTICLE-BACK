@@ -1,127 +1,63 @@
 import mongoose from "mongoose";
+import Post from "./postModel.js"
 
-const articleSchema = new mongoose.Schema({
-    _id: {
-      type: mongoose.Schema.Types.ObjectId,
-      auto: true,
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
-    postedBy: {
+const communitySchema = new mongoose.Schema(
+  {
+    name: {
       type: String,
-      ref: 'User',
+      unique: true,
       required: true,
-    },
-    title: {
-      type: String,
-      required: true,
+      trim: true,
     },
     description: {
       type: String,
-      default: '',
+      default: "",
     },
-    content: {
+    picture: {
       type: String,
-      required: true,
+      default: "",
     },
-    image: {
-      type: String,
-      default: '',
-    },
-    categories: [String],
-    comments: [
+    tags: [String],
+    members: [
       {
         userId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
           required: true,
         },
-        postedBy: {
+        role: {
           type: String,
+          enum: ["member", "communityAdmin"], 
+          default: "member",
         },
-        text: {
-          type: String,
-          required: true,
-        },
-        image: {
-          type: String,
-          default: '', 
-        },
-        createdAt: {
-          type: Date,
-          default: Date.now,
-        },
-        reply: [
-          {
-            userId: {
-              type: mongoose.Schema.Types.ObjectId,
-              ref: "User",
-              required: true,
-            },
-            postedBy: {
-              type: String,
-            },
-            text: {
-              type: String,
-            },
-            image: {
-              type: String,
-            },
-            createdAt: {
-              type: Date,
-              default: Date.now,
-            },
-          }
-        ]
       },
     ],
-    viewCount: {
-      type: Number,
-      default: 0,
-    },
-  });
-
-const communitySchema = new mongoose.Schema ({
-    name: {
-        type: String,
-        unique: true,
-    },
-    description: {
-        type: String,
-        default: '',
-    },
-    picture: {
-        type: String,
-        default: '',
-    }, 
-    tags: [String], 
-    members: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-
-        }
+    moderators: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
     ],
-    Moderators: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-        }
+    posts: [
+      {
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: "Post",
+      },
     ],
-    posts: [articleSchema],
     createdAt: {
-        type: Date,
-        default: Date.now,
+      type: Date,
+      default: Date.now,
     },
     latestActivity: {
-        type: Date,
-        default: Date.now,
+      type: Date,
+      default: Date.now,
     },
-
-});
-
+  },
+  {
+    timestamps: true, 
+  }
+);
 
 const Community = mongoose.model("Community", communitySchema);
+
 export default Community;
