@@ -30,9 +30,12 @@ export const createCommunity = async (req, res) => {
   export const addPostToCommunity = async (req, res) => {
     try {
       const { communityId, image, title, description, content, categories } = req.body;
+
+      console.log(req.body)
   
       // Validate required fields
       if (!title || !description || !content || !categories) {
+        console.log({ error: 'All fields are required' })
         return res.status(400).json({ error: 'All fields are required' });
       }
   
@@ -185,6 +188,36 @@ export const joinCommunity = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
+
+export const getAllPostsInCommunity = async (req, res) => {
+  try {
+    const communityId = req.params._id;
+
+    const community = await Community.findById(communityId).populate("posts");
+
+    if (!community) {
+      console.log({ message: "Community not found" });
+      return res.status(404).json({ message: "Community not found" });
+    }
+
+    console.log(community.posts);
+    console.log({ posts: community.posts });
+
+    const postIds = community.posts.map(post => post._id);
+
+    const posts = await Post.find({ _id: { $in: postIds } });
+
+    console.log(posts);
+
+    res.status(200).json({ bookmarks: community.posts, posts });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 
 
