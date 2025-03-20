@@ -25,7 +25,7 @@ export const signUp = async (req, res) => {
     }
   
     try {
-      const { username, email, profilePic } = req.body;
+      const { username, email, profilePic, slug } = req.body;
       let { firstName, lastName, password } = req.body;
 
       console.log(req.body)
