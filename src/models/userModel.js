@@ -93,20 +93,20 @@ const userSchema = new mongoose.Schema({
     timestamps: true, 
 });
 
-userSchema.pre('save', function(next) {
-    if (this.isModified('username') || this.isNew) {
-        const slug = this.username
-            .toLowerCase()
-            .replace(/\s+/g, '-')         
-            .replace(/[^\w-]+/g, '')      
-            .replace(/--+/g, '-')        
-            .replace(/^-+/, '')          
-            .replace(/-+$/, '');      
+// userSchema.pre('save', function(next) {
+//     if (this.isModified('username') || this.isNew) {
+//         const slug = this.username
+//             .toLowerCase()
+//             .replace(/\s+/g, '-')         
+//             .replace(/[^\w-]+/g, '')      
+//             .replace(/--+/g, '-')        
+//             .replace(/^-+/, '')          
+//             .replace(/-+$/, '');      
         
-        this.slug = slug;
-    }
-    next();
-});
+//         this.slug = slug;
+//     }
+//     next();
+// });
 
 
 const User = mongoose.model('User', userSchema);

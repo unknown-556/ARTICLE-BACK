@@ -5,6 +5,7 @@ import { formatZodError } from "../utils/errorMessage.js";
 import generateTokenAndSetCookie from "../utils/jwt.js";
 import {v2 as cloudinary} from 'cloudinary'
 import transporter from '../config/email.js'
+import slugify from "slugify";
 
 
 function hashValue(value) {
@@ -49,11 +50,14 @@ export const signUp = async (req, res) => {
         console.log('Image 1 uploaded successfully:', imageUrl);
      }
 
+     const slug = slugify(username, { lower: true, strict: true });
+
       const encryption = hashValue(password)
       const newUser = new User({
         firstName,
         lastName,
         username,
+        slug,
         password: encryption,
         email,
         profilePic: imageUrl,
