@@ -54,6 +54,7 @@ export const signUp = async (req, res) => {
         firstName,
         lastName,
         username,
+        slug,
         password: encryption,
         email,
         profilePic: imageUrl,

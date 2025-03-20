@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import slugify from 'slugify';
 
 const notificationSchema = new mongoose.Schema({
     message: {
@@ -33,6 +34,14 @@ const userSchema = new mongoose.Schema({
     username: {
         type: String,
         unique: true,
+        required: true,  
+        trim: true,     
+    },
+    slug: {
+        type: String,
+        unique: true,
+        required: true,
+        trim: true,
     },
     password: {
         type: String,
@@ -83,6 +92,22 @@ const userSchema = new mongoose.Schema({
 }, {
     timestamps: true, 
 });
+
+userSchema.pre('save', function(next) {
+    if (this.isModified('username') || this.isNew) {
+        const slug = this.username
+            .toLowerCase()
+            .replace(/\s+/g, '-')         
+            .replace(/[^\w-]+/g, '')      
+            .replace(/--+/g, '-')        
+            .replace(/^-+/, '')          
+            .replace(/-+$/, '');      
+        
+        this.slug = slug;
+    }
+    next();
+});
+
 
 const User = mongoose.model('User', userSchema);
 export default User;
