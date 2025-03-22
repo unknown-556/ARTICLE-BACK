@@ -12,7 +12,7 @@ router.post('/reply/:articleId/:commentId', auth, upload.single('image'), replyT
 router.get('/all', getAllPosts)
 router.get('/single/:_id', getArticleById)
 router.get('/catrgory/:category', getPostsByCategory)
-router.get('/article/:_id', getPostsByUsername)
+router.get('/article/:slug', getPostsByUsername)
 router.get('/related/:categories', getRelated)
 
 export default router

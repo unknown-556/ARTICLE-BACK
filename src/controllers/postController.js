@@ -242,7 +242,7 @@ export const getPostsByCategory = async (req, res) => {
 
 export const getPostsByUsername = async (req, res) => {
     try {
-        const user = await User.findById(req.params._id);
+        const user = await User.findById(req.params.slug);
         const author = `${user.username}`
         console.log(author)
 
