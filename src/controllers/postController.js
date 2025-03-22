@@ -2,6 +2,7 @@ import User from "../models/userModel.js";
 import Post from "../models/postModel.js";
 import dotenv from 'dotenv';
 import { v2 as cloudinary } from "cloudinary";
+import slugify from 'slugify';
 
 dotenv.config();
 
@@ -36,10 +37,13 @@ export const addArticle = async (req, res) => {
             }
         }
 
+        const slug = slugify(title, { lower: true, strict: true });
+
         const article = new Post({
             postedBy: user.username || `${user.firstName} ${user.lastName}`,
             image: imageUrl,
             title,
+            slug,
             description,
             content,
             categories
@@ -242,7 +246,10 @@ export const getPostsByCategory = async (req, res) => {
 
 export const getPostsByUsername = async (req, res) => {
     try {
-        const user = await User.findById(req.params.slug);
+        const slug = req.params
+        console.log(slug)
+        const user = await User.findOne(slug);
+        console.log(user)
         const author = `${user.username}`
         console.log(author)
 
@@ -310,6 +317,31 @@ export const getArticleById = async (req, res) => {
         res.status(200).json({ message: 'Article fetched successfully', article });
     } catch (error) {
 
+        console.error('Error fetching article:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+
+export const getArticleBySlug = async (req, res) => {
+    try {
+        const { slug } = req.params; 
+
+        console.log(slug)
+
+
+        const article = await Post.findOneAndUpdate(
+            { slug: slug },            
+            { $inc: { viewCount: 1 } }, 
+            { new: true }   
+        );
+
+        if (!article) {
+            return res.status(404).json({ message: 'Article not found' });
+        }
+
+        res.status(200).json({ message: 'Article fetched successfully', article });
+    } catch (error) {
         console.error('Error fetching article:', error);
         res.status(500).json({ error: 'Internal server error' });
     }

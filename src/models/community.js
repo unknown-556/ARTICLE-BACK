@@ -13,6 +13,12 @@ const communitySchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    slug: {
+      type: String,
+      unique: true,
+      required: true,
+      trim: true,
+    },
     picture: {
       type: String,
       default: "",

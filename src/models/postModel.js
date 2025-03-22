@@ -18,6 +18,12 @@ const articleSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  slug: {
+    type: String,
+    unique: true,
+    required: true,
+    trim: true,
+  },
   description: {
     type: String,
     default: '',

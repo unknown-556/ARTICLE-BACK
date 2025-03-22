@@ -41,6 +41,7 @@ export const getAuthor = async (req, res) => {
 export const getUserSlug = async (req, res) => {
     try {
         const { slug } = req.params; 
+        console.log(slug)
         const user = await User.findOne({ slug: slug }).select('-password');
 
         if (!user) {
